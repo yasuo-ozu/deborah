@@ -31,7 +31,13 @@ var DeborahDriverLineApp = (function () {
             console.log("print 3");
             var promises = req.body.events.map(function (event) {
                 var replayMessage = null;
-                that.bot.receive(event.message.text);
+                var m = new DeborahMessage();
+                m.text = event.message.text;
+                m.senderName = "unknown";
+                m.context = "main";
+                m.driver = that;
+                m.rawData = null;
+                that.bot.receive(m);
                 if (that.replyTo !== null) {
                     replayMessage = this.line.client.replyMessage({
                         replyToken: event.replyToken,
