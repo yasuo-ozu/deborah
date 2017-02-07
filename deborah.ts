@@ -56,22 +56,23 @@ class DeborahDriverLineApp implements DeborahDriver
 			accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
 			channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
 		});
+		let that = this;
 		this.app.post('/webhook/', this.line.validator.validateSignature(), (req, res, next) => {
 		console.log("print 3");
 			const promises = req.body.events.map(function(event){
 				let replayMessage = null;
-				this.bot.receive(event.message.text);
-				if (this.replyTo !== null) {
+				that.bot.receive(event.message.text);
+				if (that.replyTo !== null) {
 					replayMessage = this.line.client.replyMessage({
 						replyToken: event.replyToken,
 						messages: [
 							{
 								type: 'text',
-								text: this.message
+								text: that.message
 							}
 						]
 					});
-					this.replyTo = this.message = null;
+					that.replyTo = that.message = null;
 				}
 		console.log("print 5");
 				return replayMessage;
