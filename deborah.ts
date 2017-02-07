@@ -45,17 +45,19 @@ class DeborahDriverLineApp implements DeborahDriver
 
 		this.bot = bot;
 		this.settings = settings;
-
+		console.log("print 1");
 		this.app.use(this.bodyParser.json({
 			verify (req, res, buf) {
 				req.rawBody = buf;
 			}
 		}));
+		console.log("print 2");
 		this.line.init({
 			accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
 			channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
 		});
 		this.app.post('/webhook/', this.line.validator.validateSignature(), (req, res, next) => {
+		console.log("print 3");
 			const promises = req.body.events.map(function(event){
 				let replayMessage = null;
 				this.bot.receive(event.message.text);
@@ -71,10 +73,14 @@ class DeborahDriverLineApp implements DeborahDriver
 					});
 					this.replyTo = this.message = null;
 				}
+		console.log("print 5");
 				return replayMessage;
 			});
+			
+		console.log("print 4");
 			for (let promise of promises) {
 				promise.then(() => res.json({success: true}));
+		console.log("print 5");
 			}
 			// getPromise()
 			// 	.all(promises)
@@ -86,11 +92,13 @@ class DeborahDriverLineApp implements DeborahDriver
 		let port = process.env.PORT || 3000;
 		this.app.listen(port, function(){
 			console.log('Example app listening on port ' + port + '!')
+		console.log("print 6");
 		});
 	}
 	reply(replyTo: DeborahMessage, message: string){
 		this.replyTo = replyTo;
 		this.message = message;
+		console.log("print 7");
 	}
 }
 

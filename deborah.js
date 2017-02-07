@@ -15,16 +15,19 @@ var DeborahDriverLineApp = (function () {
         this.app = this.express();
         this.bot = bot;
         this.settings = settings;
+        console.log("print 1");
         this.app.use(this.bodyParser.json({
             verify: function (req, res, buf) {
                 req.rawBody = buf;
             }
         }));
+        console.log("print 2");
         this.line.init({
             accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
             channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
         });
         this.app.post('/webhook/', this.line.validator.validateSignature(), function (req, res, next) {
+            console.log("print 3");
             var promises = req.body.events.map(function (event) {
                 var replayMessage = null;
                 this.bot.receive(event.message.text);
@@ -40,11 +43,14 @@ var DeborahDriverLineApp = (function () {
                     });
                     this.replyTo = this.message = null;
                 }
+                console.log("print 5");
                 return replayMessage;
             });
+            console.log("print 4");
             for (var _i = 0, promises_1 = promises; _i < promises_1.length; _i++) {
                 var promise = promises_1[_i];
                 promise.then(function () { return res.json({ success: true }); });
+                console.log("print 5");
             }
             // getPromise()
             // 	.all(promises)
@@ -65,11 +71,13 @@ var DeborahDriverLineApp = (function () {
         var port = process.env.PORT || 3000;
         this.app.listen(port, function () {
             console.log('Example app listening on port ' + port + '!');
+            console.log("print 6");
         });
     };
     DeborahDriverLineApp.prototype.reply = function (replyTo, message) {
         this.replyTo = replyTo;
         this.message = message;
+        console.log("print 7");
     };
     return DeborahDriverLineApp;
 }());
