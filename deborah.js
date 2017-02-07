@@ -31,24 +31,26 @@ var DeborahDriverLineApp = (function () {
             console.log("print 3");
             var promises = req.body.events.map(function (event) {
                 var replayMessage = null;
-                var m = new DeborahMessage();
-                m.text = event.message.text;
-                m.senderName = "unknown";
-                m.context = "main";
-                m.driver = that;
-                m.rawData = null;
-                that.bot.receive(m);
-                if (that.replyTo !== null) {
-                    replayMessage = this.line.client.replyMessage({
-                        replyToken: event.replyToken,
-                        messages: [
-                            {
-                                type: 'text',
-                                text: that.message
-                            }
-                        ]
-                    });
-                    that.replyTo = that.message = null;
+                if (event.message.text) {
+                    var m = new DeborahMessage();
+                    m.text = event.message.text;
+                    m.senderName = "unknown";
+                    m.context = "main";
+                    m.driver = that;
+                    m.rawData = null;
+                    that.bot.receive(m);
+                    if (that.replyTo !== null) {
+                        replayMessage = this.line.client.replyMessage({
+                            replyToken: event.replyToken,
+                            messages: [
+                                {
+                                    type: 'text',
+                                    text: that.message
+                                }
+                            ]
+                        });
+                        that.replyTo = that.message = null;
+                    }
                 }
                 console.log("print 5");
                 return replayMessage;
@@ -56,7 +58,8 @@ var DeborahDriverLineApp = (function () {
             console.log("print 4");
             for (var _i = 0, promises_1 = promises; _i < promises_1.length; _i++) {
                 var promise = promises_1[_i];
-                promise.then(function () { return res.json({ success: true }); });
+                if (promise !== null)
+                    promise.then(function () { return res.json({ success: true }); });
                 console.log("print 5");
             }
             // getPromise()

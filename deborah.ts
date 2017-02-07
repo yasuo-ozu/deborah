@@ -61,24 +61,26 @@ class DeborahDriverLineApp implements DeborahDriver
 		console.log("print 3");
 			const promises = req.body.events.map(function(event){
 				let replayMessage = null;
-				var m = new DeborahMessage();
-				m.text = event.message.text;
-				m.senderName = "unknown";
-				m.context = "main";
-				m.driver = that;
-				m.rawData = null;
-				that.bot.receive(m);
-				if (that.replyTo !== null) {
-					replayMessage = this.line.client.replyMessage({
-						replyToken: event.replyToken,
-						messages: [
-							{
-								type: 'text',
-								text: that.message
-							}
-						]
-					});
-					that.replyTo = that.message = null;
+				if (event.message.text) {
+					var m = new DeborahMessage();
+					m.text = event.message.text;
+					m.senderName = "unknown";
+					m.context = "main";
+					m.driver = that;
+					m.rawData = null;
+					that.bot.receive(m);
+					if (that.replyTo !== null) {
+						replayMessage = this.line.client.replyMessage({
+							replyToken: event.replyToken,
+							messages: [
+								{
+									type: 'text',
+									text: that.message
+								}
+							]
+						});
+						that.replyTo = that.message = null;
+					}
 				}
 		console.log("print 5");
 				return replayMessage;
@@ -86,7 +88,7 @@ class DeborahDriverLineApp implements DeborahDriver
 			
 		console.log("print 4");
 			for (let promise of promises) {
-				promise.then(() => res.json({success: true}));
+				if (promise !== null) promise.then(() => res.json({success: true}));
 		console.log("print 5");
 			}
 			// getPromise()
