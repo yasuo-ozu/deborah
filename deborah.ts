@@ -279,7 +279,7 @@ class Deborah
 		console.log("Deborah.receive: [" + data.text + "]");
 		// 特定の文字列〔例：:fish_cake:（なるとの絵文字）〕を含むメッセージに反応する
 		for(var k in this.fixedResponseList){
-			console.log(data);
+			console.log(JSON.stringify(data));
 			if(data.text.match(this.fixedResponseList[k][0])){
 				data.driver.reply(data, "@" + data.senderName + " " + this.fixedResponseList[k][1]);
 				break;
