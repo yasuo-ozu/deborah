@@ -40,7 +40,7 @@ var DeborahDriverLineApp = (function () {
                     m.rawData = null;
                     that.bot.receive(m);
                     if (that.replyTo !== null) {
-                        replayMessage = this.line.client.replyMessage({
+                        replayMessage = that.line.client.replyMessage({
                             replyToken: event.replyToken,
                             messages: [
                                 {
