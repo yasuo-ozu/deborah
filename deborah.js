@@ -3,6 +3,76 @@ var DeborahMessage = (function () {
     }
     return DeborahMessage;
 }());
+var DeborahDriverLineApp = (function () {
+    function DeborahDriverLineApp(bot, settings) {
+        this.replyTo = null;
+        this.message = null;
+        this.line = this.tryRequire('node-line-bot-api');
+        this.express = this.tryRequire('express');
+        this.bodyParser = this.tryRequire('body-parser');
+        this.lineClient = this.line.client;
+        this.lineValidator = this.line.validator;
+        this.app = this.express();
+        this.bot = bot;
+        this.settings = settings;
+        this.app.use(this.bodyParser.json({
+            verify: function (req, res, buf) {
+                req.rawBody = buf;
+            }
+        }));
+        this.line.init({
+            accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
+            channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
+        });
+        this.app.post('/webhook/', this.line.validator.validateSignature(), function (req, res, next) {
+            var promises = req.body.events.map(function (event) {
+                var replayMessage = null;
+                this.bot.receive(event.message.text);
+                if (this.replyTo !== null) {
+                    replayMessage = this.line.client.replyMessage({
+                        replyToken: event.replyToken,
+                        messages: [
+                            {
+                                type: 'text',
+                                text: this.message
+                            }
+                        ]
+                    });
+                    this.replyTo = this.message = null;
+                }
+                return replayMessage;
+            });
+            for (var _i = 0, promises_1 = promises; _i < promises_1.length; _i++) {
+                var promise = promises_1[_i];
+                promise.then(function () { return res.json({ success: true }); });
+            }
+            // getPromise()
+            // 	.all(promises)
+            // 	.then(() => res.json({success: true}))
+        });
+        this.connect();
+    }
+    DeborahDriverLineApp.prototype.tryRequire = function (path) {
+        try {
+            return require(path);
+        }
+        catch (e) {
+            console.log("DeborahDriverLineApp needs '" + path + "'.\n Please run 'sudo npm install " + path + "'");
+        }
+        return null;
+    };
+    DeborahDriverLineApp.prototype.connect = function () {
+        var port = process.env.PORT || 3000;
+        this.app.listen(port, function () {
+            console.log('Example app listening on port ' + port + '!');
+        });
+    };
+    DeborahDriverLineApp.prototype.reply = function (replyTo, message) {
+        this.replyTo = replyTo;
+        this.message = message;
+    };
+    return DeborahDriverLineApp;
+}());
 var DeborahDriverSlack = (function () {
     function DeborahDriverSlack(bot, settings) {
         console.log("Driver initialized: Slack (" + settings.team + ")");
@@ -152,8 +222,11 @@ var Deborah = (function () {
             if (iset.type == "slack-connection") {
                 this.driverList.push(new DeborahDriverSlack(this, iset));
             }
-            if (iset.type == "stdio") {
+            else if (iset.type == "stdio") {
                 this.driverList.push(new DeborahDriverStdIO(this, iset));
+            }
+            else if (iset.type == "line") {
+                this.driverList.push(new DeborahDriverLineApp(this, iset));
             }
         }
     };

@@ -13,6 +13,87 @@ class DeborahMessage
 	rawData: any;
 }
 
+class DeborahDriverLineApp implements DeborahDriver
+{
+	line: any;
+	express: any;
+	bodyParser: any;
+	lineClient: any;
+	lineValidator: any;
+	app: any;
+
+	replyTo: DeborahMessage = null;
+	message: string = null;
+
+	bot: Deborah;
+	settings: any;
+	private tryRequire(path: string) : any {
+		try {
+			return require(path);
+		} catch(e) {
+			console.log("DeborahDriverLineApp needs '" + path + "'.\n Please run 'sudo npm install " + path + "'");
+		}
+		return null;
+	}
+	constructor(bot: Deborah, settings: any) {
+		this.line    = this.tryRequire('node-line-bot-api');
+		this.express = this.tryRequire('express');
+		this.bodyParser = this.tryRequire('body-parser');
+		this.lineClient = this.line.client;
+		this.lineValidator = this.line.validator;
+		this.app = this.express();
+
+		this.bot = bot;
+		this.settings = settings;
+
+		this.app.use(this.bodyParser.json({
+			verify (req, res, buf) {
+				req.rawBody = buf;
+			}
+		}));
+		this.line.init({
+			accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
+			channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
+		});
+		this.app.post('/webhook/', this.line.validator.validateSignature(), (req, res, next) => {
+			const promises = req.body.events.map(function(event){
+				let replayMessage = null;
+				this.bot.receive(event.message.text);
+				if (this.replyTo !== null) {
+					replayMessage = this.line.client.replyMessage({
+						replyToken: event.replyToken,
+						messages: [
+							{
+								type: 'text',
+								text: this.message
+							}
+						]
+					});
+					this.replyTo = this.message = null;
+				}
+				return replayMessage;
+			});
+			for (let promise of promises) {
+				promise.then(() => res.json({success: true}));
+			}
+			// getPromise()
+			// 	.all(promises)
+			// 	.then(() => res.json({success: true}))
+		});
+		this.connect();
+	}
+	connect() {
+		let port = process.env.PORT || 3000;
+		this.app.listen(port, function(){
+			console.log('Example app listening on port ' + port + '!')
+		});
+	}
+	reply(replyTo: DeborahMessage, message: string){
+		this.replyTo = replyTo;
+		this.message = message;
+	}
+}
+
 class DeborahDriverSlack implements DeborahDriver
 {
 	bot: Deborah;
@@ -163,16 +244,18 @@ class Deborah
 	}
 	start(){
 		var interfaces = this.settings.interfaces;
-		if(!(interfaces instanceof Array)){
+		if (!(interfaces instanceof Array)) {
 			console.log("settings.interfaces is not an Array.");
 			process.exit(0);
 		}
-		for(var i = 0; i < interfaces.length; i++){
+		for (var i = 0; i < interfaces.length; i++) {
 			var iset = interfaces[i];
-			if(iset.type == "slack-connection"){
+			if (iset.type == "slack-connection") {
 				this.driverList.push(new DeborahDriverSlack(this, iset));
-			} if(iset.type == "stdio"){
+			} else if (iset.type == "stdio") {
 				this.driverList.push(new DeborahDriverStdIO(this, iset));
+			} else if (iset.type == "line") {
+				this.driverList.push(new DeborahDriverLineApp(this, iset));
 			}
 		}
 	}
