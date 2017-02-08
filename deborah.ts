@@ -22,6 +22,7 @@ class DeborahDriverLineApp implements DeborahDriver
 	lineValidator: any;
 	app: any;
 
+	stat: number = 0;
 	replyTo: DeborahMessage = null;
 	message: string = null;
 
@@ -45,7 +46,6 @@ class DeborahDriverLineApp implements DeborahDriver
 
 		this.bot = bot;
 		this.settings = settings;
-		// this.app.use(this.bodyParser.json());
 		this.app.use(this.bodyParser.json({
 			verify: function (req, res, buf) {
 				req.rawBody = buf;
@@ -56,19 +56,22 @@ class DeborahDriverLineApp implements DeborahDriver
 			channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
 		});
 		let that = this;
-		this.app.post('/webhook/', this.line.validator.validateSignature(), (req, res, next) => {
-			const promises = req.body.events.map(function(event){
-				let replyMessage = null;
-				if (event.message.text) {
+		this.app.post('/webhook/', 
+		  this.line.validator.validateSignature(), 
+		  function(req, res, next){
+			const promises: Promise<any>[] = [];
+			req.body.events.map(function(event){
+				if (!event.message.text) return;
 					var m = new DeborahMessage();
 					m.text = event.message.text;
 					m.senderName = "unknown";
 					m.context = "main";
 					m.driver = that;
 					m.rawData = null;
+					that.stat = 1;
 					that.bot.receive(m);
-					if (that.replyTo !== null) {
-						replyMessage = that.line.client.replyMessage({
+					if (that.stat == 2) {
+						promises.push(that.line.client.replyMessage({
 							replyToken: event.replyToken,
 							messages: [
 								{
@@ -76,17 +79,11 @@ class DeborahDriverLineApp implements DeborahDriver
 									text: that.message
 								}
 							]
-						});
-						that.replyTo = that.message = null;
-						replyMessage.then(function(){res.json({success: true})});
+						}));
 					}
-				}
-				return replyMessage;
+					that.stat = 0;
 			});
-			
-			// for (let promise of promises) {
-			// 	if (promise !== null) promise.then(() => res.json({success: true}));
-			// }
+			Promise.all(promises).then(function(){res.json({success: true})});
 		});
 		this.connect();
 	}
@@ -94,13 +91,15 @@ class DeborahDriverLineApp implements DeborahDriver
 		let port = process.env.PORT || 3000;
 		this.app.listen(port, function(){
 			console.log('Example app listening on port ' + port + '!')
-		console.log("print 6");
 		});
 	}
 	reply(replyTo: DeborahMessage, message: string){
-		this.replyTo = replyTo;
-		this.message = message;
-		console.log("print 7");
+		if (this.stat == 1) {
+			// Send as reply
+			this.replyTo = replyTo;
+			this.message = message;
+			this.stat = 2;
+		} 
 	}
 }
 
