@@ -61,7 +61,7 @@ class DeborahDriverLineApp implements DeborahDriver
 		  function(req, res, next){
 			const promises: Promise<any>[] = [];
 			req.body.events.map(function(event){
-				console.log(req);
+				console.log(event);
 				if (!event.message.text) return;
 					var m = new DeborahMessage();
 					m.text = event.message.text;
