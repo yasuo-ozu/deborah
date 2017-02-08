@@ -45,6 +45,7 @@ class DeborahDriverLineApp implements DeborahDriver
 
 		this.bot = bot;
 		this.settings = settings;
+		this.app.use(this.bodyParser.json());
 		// this.app.use(this.bodyParser.json({
 		// 	verify (req, res, buf) {
 		// 		req.rawBody = buf;
@@ -57,6 +58,7 @@ class DeborahDriverLineApp implements DeborahDriver
 		let that = this;
 		this.app.post('/webhook/', this.line.validator.validateSignature(), (req, res, next) => {
 		console.log("print 3");
+			res.setHeader('Content-Type', 'text/plain');
 			const promises = req.body.events.map(function(event){
 				let replayMessage = null;
 				if (event.message.text) {
