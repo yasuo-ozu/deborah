@@ -48,9 +48,6 @@ class DeborahDriverLineApp implements DeborahDriver
 		// this.app.use(this.bodyParser.json());
 		this.app.use(this.bodyParser.json({
 			verify: function (req, res, buf) {
-				console.log("varify.req", req);
-				console.log("varify.res", res);
-				console.log("varify.buf", buf);
 				req.rawBody = buf;
 			}
 		}));
@@ -60,10 +57,8 @@ class DeborahDriverLineApp implements DeborahDriver
 		});
 		let that = this;
 		this.app.post('/webhook/', this.line.validator.validateSignature(), (req, res, next) => {
-		console.log("print 3");
-			res.setHeader('Content-Type', 'text/plain');
 			const promises = req.body.events.map(function(event){
-				let replayMessage = null;
+				let replyMessage = null;
 				if (event.message.text) {
 					var m = new DeborahMessage();
 					m.text = event.message.text;
@@ -73,7 +68,7 @@ class DeborahDriverLineApp implements DeborahDriver
 					m.rawData = null;
 					that.bot.receive(m);
 					if (that.replyTo !== null) {
-						replayMessage = that.line.client.replyMessage({
+						replyMessage = that.line.client.replyMessage({
 							replyToken: event.replyToken,
 							messages: [
 								{
@@ -83,20 +78,15 @@ class DeborahDriverLineApp implements DeborahDriver
 							]
 						});
 						that.replyTo = that.message = null;
+						replyMessage.then(function(){res.json({success: true})});
 					}
 				}
-		console.log("print 5");
-				return replayMessage;
+				return replyMessage;
 			});
 			
-		console.log("print 4");
-			for (let promise of promises) {
-				if (promise !== null) promise.then(() => res.json({success: true}));
-		console.log("print 5");
-			}
-			// getPromise()
-			// 	.all(promises)
-			// 	.then(() => res.json({success: true}))
+			// for (let promise of promises) {
+			// 	if (promise !== null) promise.then(() => res.json({success: true}));
+			// }
 		});
 		this.connect();
 	}

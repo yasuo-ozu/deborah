@@ -18,9 +18,6 @@ var DeborahDriverLineApp = (function () {
         // this.app.use(this.bodyParser.json());
         this.app.use(this.bodyParser.json({
             verify: function (req, res, buf) {
-                console.log("varify.req", req);
-                console.log("varify.res", res);
-                console.log("varify.buf", buf);
                 req.rawBody = buf;
             }
         }));
@@ -30,10 +27,8 @@ var DeborahDriverLineApp = (function () {
         });
         var that = this;
         this.app.post('/webhook/', this.line.validator.validateSignature(), function (req, res, next) {
-            console.log("print 3");
-            res.setHeader('Content-Type', 'text/plain');
             var promises = req.body.events.map(function (event) {
-                var replayMessage = null;
+                var replyMessage = null;
                 if (event.message.text) {
                     var m = new DeborahMessage();
                     m.text = event.message.text;
@@ -43,7 +38,7 @@ var DeborahDriverLineApp = (function () {
                     m.rawData = null;
                     that.bot.receive(m);
                     if (that.replyTo !== null) {
-                        replayMessage = that.line.client.replyMessage({
+                        replyMessage = that.line.client.replyMessage({
                             replyToken: event.replyToken,
                             messages: [
                                 {
@@ -53,21 +48,14 @@ var DeborahDriverLineApp = (function () {
                             ]
                         });
                         that.replyTo = that.message = null;
+                        replyMessage.then(function () { res.json({ success: true }); });
                     }
                 }
-                console.log("print 5");
-                return replayMessage;
+                return replyMessage;
             });
-            console.log("print 4");
-            for (var _i = 0, promises_1 = promises; _i < promises_1.length; _i++) {
-                var promise = promises_1[_i];
-                if (promise !== null)
-                    promise.then(function () { return res.json({ success: true }); });
-                console.log("print 5");
-            }
-            // getPromise()
-            // 	.all(promises)
-            // 	.then(() => res.json({success: true}))
+            // for (let promise of promises) {
+            // 	if (promise !== null) promise.then(() => res.json({success: true}));
+            // }
         });
         this.connect();
     }
