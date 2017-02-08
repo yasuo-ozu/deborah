@@ -15,13 +15,11 @@ var DeborahDriverLineApp = (function () {
         this.app = this.express();
         this.bot = bot;
         this.settings = settings;
-        console.log("print 1");
-        this.app.use(this.bodyParser.json({
-            verify: function (req, res, buf) {
-                req.rawBody = buf;
-            }
-        }));
-        console.log("print 2");
+        // this.app.use(this.bodyParser.json({
+        // 	verify (req, res, buf) {
+        // 		req.rawBody = buf;
+        // 	}
+        // }));
         this.line.init({
             accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
             channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
@@ -73,7 +71,7 @@ var DeborahDriverLineApp = (function () {
             return require(path);
         }
         catch (e) {
-            console.log("DeborahDriverLineApp needs '" + path + "'.\n Please run 'sudo npm install " + path + "'");
+            console.log("DeborahDriverLineApp needs '" + path + "'.\n Please run 'sudo npm install -g " + path + "'");
         }
         return null;
     };
