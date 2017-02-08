@@ -15,12 +15,12 @@ var DeborahDriverLineApp = (function () {
         this.app = this.express();
         this.bot = bot;
         this.settings = settings;
-        this.app.use(this.bodyParser.json());
-        // this.app.use(this.bodyParser.json({
-        // 	verify (req, res, buf) {
-        // 		req.rawBody = buf;
-        // 	}
-        // }));
+        // this.app.use(this.bodyParser.json());
+        this.app.use(this.bodyParser.json({
+            verify: function (req, res, buf) {
+                req.rawBody = buf;
+            }
+        }));
         this.line.init({
             accessToken: process.env.LINE_TOKEN || this.settings.accessToken,
             channelSecret: process.env.LINE_SECRET || this.settings.channelSecret
