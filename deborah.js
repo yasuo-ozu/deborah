@@ -18,6 +18,9 @@ var DeborahDriverLineApp = (function () {
         // this.app.use(this.bodyParser.json());
         this.app.use(this.bodyParser.json({
             verify: function (req, res, buf) {
+                console.log("varify.req", req);
+                console.log("varify.res", res);
+                console.log("varify.buf", buf);
                 req.rawBody = buf;
             }
         }));
