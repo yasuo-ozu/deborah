@@ -26,6 +26,7 @@ class DeborahDriverLineApp {
         this.app.post('/webhook/', this.line.validator.validateSignature(), function (req, res, next) {
             const promises = [];
             req.body.events.map(function (event) {
+                console.log(event.message);
                 if (!event.message.text)
                     return;
                 var m = new DeborahMessage();
